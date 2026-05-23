@@ -16,11 +16,6 @@ class DataInspector:
 
         """
         Constructor method.
-
-        Attributes
-        ----------
-        df : pandas.DataFrame
-            Stores the loaded dataset.
         """
 
         self.df = None
@@ -111,8 +106,6 @@ class DataInspector:
                 errors='coerce'
             )
 
-            # Only convert if column
-            # is not entirely NaN
 
             if not converted.isnull().all():
 
@@ -193,18 +186,18 @@ class DataInspector:
         print(summary["Missing Values"])
 
 
-        # Styled dataframe display for
-        # Colab / Jupyter / VS Code notebooks
+        # Styled dataframe display
+        # for Colab / Jupyter
 
         try:
 
-            from IPython.display import display
+            from IPython.display import display # pyright: ignore[reportMissingModuleSource]
 
             display(
                 self.df.head(preview_rows)
             )
 
-        except:
+        except Exception:
 
             print(
                 self.df.head(preview_rows)
@@ -283,10 +276,15 @@ class DataInspector:
 
             except Exception as e:
 
-                print(f"Could not process column {col}: {e}")
+                print(
+                    f"Could not process column {col}: {e}"
+                )
 
 
-        print(f"Missing values handled using '{strategy}' strategy.")
+        print(
+            f"Missing values handled using "
+            f"'{strategy}' strategy."
+        )
 
 
     def remove_duplicates(self):
@@ -311,7 +309,9 @@ class DataInspector:
 
         removed = before - after
 
-        print(f"{removed} duplicate rows removed.")
+        print(
+            f"{removed} duplicate rows removed."
+        )
 
 
     def delete_columns(self, columns):
@@ -404,7 +404,10 @@ class DataInspector:
         if not pd.api.types.is_numeric_dtype(
                 self.df[column]):
 
-            print("Selected column is not numeric.")
+            print(
+                "Selected column is not numeric."
+            )
+
             return
 
 
@@ -426,7 +429,9 @@ class DataInspector:
         ]
 
 
-        print(f"Number of outliers: {len(outliers)}")
+        print(
+            f"Number of outliers: {len(outliers)}"
+        )
 
 
         if remove:
