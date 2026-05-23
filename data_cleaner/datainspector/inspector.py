@@ -122,10 +122,15 @@ class DataInspector:
         print("Automatic type conversion completed.")
 
 
-    def data_summary(self):
+    def data_summary(self, preview_rows=20):
 
         """
         Display important dataset information.
+
+        Parameters
+        ----------
+        preview_rows : int
+            Number of preview rows
 
         Returns
         -------
@@ -167,23 +172,44 @@ class DataInspector:
         }
 
 
-        print("\n========== DATA SUMMARY ==========")
+        print("\n--- Data Summary ---\n")
 
-        print(f"\nRows: {summary['Rows']}")
+        print(
+            f"Rows: {summary['Rows']} | "
+            f"Columns: {summary['Columns']}"
+        )
 
-        print(f"Columns: {summary['Columns']}")
+        print(
+            f"Numerical ({len(numeric_cols)}): "
+            f"{numeric_cols}"
+        )
 
-        print("\nNumeric Columns:")
-        print(summary["Numeric Columns"])
-
-        print("\nCategorical Columns:")
-        print(summary["Categorical Columns"])
+        print(
+            f"Categorical ({len(categorical_cols)}): "
+            f"{categorical_cols}"
+        )
 
         print("\nMissing Values:")
         print(summary["Missing Values"])
 
-        print("\nFirst 20 Rows:")
-        print(self.df.head(20))
+
+        # Styled dataframe display for
+        # Colab / Jupyter / VS Code notebooks
+
+        try:
+
+            from IPython.display import display
+
+            display(
+                self.df.head(preview_rows)
+            )
+
+        except:
+
+            print(
+                self.df.head(preview_rows)
+            )
+
 
         return summary
 
