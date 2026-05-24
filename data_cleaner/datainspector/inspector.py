@@ -1,6 +1,13 @@
 import pandas as pd
 import numpy as np
 
+from sklearn.preprocessing import (
+    MinMaxScaler,
+    StandardScaler,
+    RobustScaler,
+    LabelEncoder
+)
+
 
 class DataInspector:
 
@@ -186,9 +193,6 @@ class DataInspector:
         print(summary["Missing Values"])
 
 
-        # Styled dataframe display
-        # for Colab / Jupyter
-
         try:
 
             from IPython.display import display # pyright: ignore[reportMissingModuleSource]
@@ -205,6 +209,105 @@ class DataInspector:
 
 
         return summary
+
+
+    def show_missing_data(self):
+
+        """
+        Display missing values in each column.
+        """
+
+        if self.df is None:
+
+            print("No dataset loaded.")
+            return
+
+
+        missing = self.df.isnull().sum()
+
+        missing = missing[missing > 0]
+
+
+        if missing.empty:
+
+            print("No missing values found.")
+
+        else:
+
+            print(missing)
+
+
+    def column_details(self):
+
+        """
+        Display detailed information
+        about all columns.
+        """
+
+        if self.df is None:
+
+            print("No dataset loaded.")
+            return
+
+
+        details = pd.DataFrame({
+
+            "Column":
+            self.df.columns,
+
+            "Datatype":
+            self.df.dtypes.values,
+
+            "Missing Values":
+            self.df.isnull().sum().values,
+
+            "Unique Values":
+            self.df.nunique().values
+        })
+
+
+        try:
+
+            from IPython.display import display # pyright: ignore[reportMissingModuleSource]
+
+            display(details)
+
+        except Exception:
+
+            print(details)
+
+
+    def get_categorical_summary(self):
+
+        """
+        Display summary of categorical columns.
+        """
+
+        if self.df is None:
+
+            print("No dataset loaded.")
+            return
+
+
+        categorical = self.df.select_dtypes(
+            exclude=np.number
+        )
+
+
+        if categorical.empty:
+
+            print("No categorical columns found.")
+            return
+
+
+        for col in categorical.columns:
+
+            print(f"\n--- {col} ---")
+
+            print(
+                categorical[col]
+                .value_counts(dropna=False)
+            )
 
 
     def handle_missing_values(
@@ -445,6 +548,190 @@ class DataInspector:
 
 
         return outliers
+
+
+    def extract_normalized_numeric_data(
+            self,
+            method='minmax'):
+
+        """
+        Normalize numeric columns.
+
+        Parameters
+        ----------
+        method : str
+            minmax, standard, robust
+
+        Returns
+        -------
+        pandas.DataFrame
+        """
+
+        if self.df is None:
+
+            print("No dataset loaded.")
+            return
+
+
+        numeric_df = self.df.select_dtypes(
+            include=np.number
+        )
+
+
+        if numeric_df.empty:
+
+            print("No numeric columns found.")
+            return
+
+
+        if method == 'minmax':
+
+            scaler = MinMaxScaler()
+
+
+        elif method == 'standard':
+
+            scaler = StandardScaler()
+
+
+        elif method == 'robust':
+
+            scaler = RobustScaler()
+
+
+        else:
+
+            print("Invalid normalization method.")
+            return
+
+
+        scaled_data = scaler.fit_transform(
+            numeric_df
+        )
+
+
+        scaled_df = pd.DataFrame(
+            scaled_data,
+            columns=numeric_df.columns
+        )
+
+
+        print(
+            f"{method} normalization completed."
+        )
+
+        return scaled_df
+
+
+    def extract_normalized_categorical_data(
+            self,
+            method='onehot'):
+
+        """
+        Encode categorical columns.
+
+        Parameters
+        ----------
+        method : str
+            onehot or ordinal
+
+        Returns
+        -------
+        pandas.DataFrame
+        """
+
+        if self.df is None:
+
+            print("No dataset loaded.")
+            return
+
+
+        categorical_df = self.df.select_dtypes(
+            exclude=np.number
+        )
+
+
+        if categorical_df.empty:
+
+            print("No categorical columns found.")
+            return
+
+
+        if method == 'onehot':
+
+            encoded_df = pd.get_dummies(
+                categorical_df,
+                drop_first=True
+            )
+
+
+        elif method == 'ordinal':
+
+            encoded_df = categorical_df.copy()
+
+
+            encoder = LabelEncoder()
+
+
+            for col in encoded_df.columns:
+
+                encoded_df[col] = encoder.fit_transform(
+                    encoded_df[col].astype(str)
+                )
+
+
+        else:
+
+            print("Invalid encoding method.")
+            return
+
+
+        print(
+            f"{method} encoding completed."
+        )
+
+        return encoded_df
+
+
+    def merge_processed_data(
+            self,
+            numeric_method='minmax',
+            categorical_method='onehot'):
+
+        """
+        Merge normalized numeric data
+        and encoded categorical data.
+
+        Returns
+        -------
+        pandas.DataFrame
+        """
+
+        numeric_df = (
+            self.extract_normalized_numeric_data(
+                method=numeric_method
+            )
+        )
+
+
+        categorical_df = (
+            self.extract_normalized_categorical_data(
+                method=categorical_method
+            )
+        )
+
+
+        merged_df = pd.concat(
+            [numeric_df, categorical_df],
+            axis=1
+        )
+
+
+        print(
+            "Processed dataset merged successfully."
+        )
+
+        return merged_df
 
 
     def get_dataframe(self):
