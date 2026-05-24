@@ -126,15 +126,6 @@ class DataInspector:
 
         """
         Display important dataset information.
-
-        Parameters
-        ----------
-        preview_rows : int
-            Number of preview rows
-
-        Returns
-        -------
-        dict
         """
 
         if self.df is None:
@@ -172,7 +163,7 @@ class DataInspector:
         }
 
 
-        print("\n--- Data Summary ---\n")
+        print("\n========== DATA SUMMARY ==========\n")
 
         print(
             f"Rows: {summary['Rows']} | "
@@ -180,22 +171,42 @@ class DataInspector:
         )
 
         print(
-            f"Numerical ({len(numeric_cols)}): "
-            f"{numeric_cols}"
+            f"\nNumerical Columns ({len(numeric_cols)}):"
         )
+
+        print(numeric_cols)
 
         print(
-            f"Categorical ({len(categorical_cols)}): "
-            f"{categorical_cols}"
+            f"\nCategorical Columns "
+            f"({len(categorical_cols)}):"
         )
 
-        print("\nMissing Values:")
-        print(summary["Missing Values"])
+        print(categorical_cols)
+
+
+        missing_df = pd.DataFrame({
+
+            "Column":
+            self.df.columns,
+
+            "Missing Values":
+            self.df.isnull().sum().values
+        })
 
 
         try:
 
             from IPython.display import display # pyright: ignore[reportMissingModuleSource]
+
+            print("\nMissing Value Report:\n")
+
+            display(
+                missing_df[
+                    missing_df["Missing Values"] > 0
+                ]
+            )
+
+            print("\nDataset Preview:\n")
 
             display(
                 self.df.head(preview_rows)
@@ -203,9 +214,9 @@ class DataInspector:
 
         except Exception:
 
-            print(
-                self.df.head(preview_rows)
-            )
+            print(missing_df)
+
+            print(self.df.head(preview_rows))
 
 
         return summary
@@ -214,7 +225,7 @@ class DataInspector:
     def show_missing_data(self):
 
         """
-        Display missing values in each column.
+        Display missing value report.
         """
 
         if self.df is None:
@@ -223,16 +234,49 @@ class DataInspector:
             return
 
 
-        missing = self.df.isnull().sum()
+        missing = pd.DataFrame({
 
-        missing = missing[missing > 0]
+            "Column":
+            self.df.columns,
+
+            "Missing Values":
+            self.df.isnull().sum().values,
+
+            "Missing Percentage":
+            (
+                self.df.isnull().sum().values
+                / len(self.df)
+            ) * 100
+        })
+
+
+        missing = missing[
+            missing["Missing Values"] > 0
+        ]
 
 
         if missing.empty:
 
             print("No missing values found.")
 
-        else:
+            return
+
+
+        try:
+
+            from IPython.display import display # pyright: ignore[reportMissingModuleSource]
+
+            display(
+                missing
+                .sort_values(
+                    by="Missing Values",
+                    ascending=False
+                )
+                .style
+                .background_gradient()
+            )
+
+        except Exception:
 
             print(missing)
 
@@ -270,7 +314,9 @@ class DataInspector:
 
             from IPython.display import display # pyright: ignore[reportMissingModuleSource]
 
-            display(details)
+            display(
+                details.style.background_gradient()
+            )
 
         except Exception:
 
@@ -302,12 +348,44 @@ class DataInspector:
 
         for col in categorical.columns:
 
-            print(f"\n--- {col} ---")
+            print(f"\n========== {col} ==========\n")
 
-            print(
+
+            summary_df = pd.DataFrame({
+
+                "Category":
                 categorical[col]
                 .value_counts(dropna=False)
-            )
+                .index,
+
+                "Count":
+                categorical[col]
+                .value_counts(dropna=False)
+                .values
+            })
+
+
+            summary_df["Percentage"] = (
+
+                summary_df["Count"]
+                / len(categorical)
+
+            ) * 100
+
+
+            try:
+
+                from IPython.display import display # pyright: ignore[reportMissingModuleSource]
+
+                display(
+                    summary_df
+                    .style
+                    .background_gradient()
+                )
+
+            except Exception:
+
+                print(summary_df)
 
 
     def handle_missing_values(
@@ -317,18 +395,8 @@ class DataInspector:
             constant_value=None):
 
         """
-        Handle missing values using different strategies.
-
-        Parameters
-        ----------
-        strategy : str
-            mean, median, mode, constant
-
-        columns : list
-            Columns to process
-
-        constant_value :
-            Value used when strategy='constant'
+        Handle missing values using:
+        mean, median, mode, constant.
         """
 
         if self.df is None:
@@ -421,11 +489,6 @@ class DataInspector:
 
         """
         Delete columns from dataset.
-
-        Parameters
-        ----------
-        columns : list
-            List of column names
         """
 
         if self.df is None:
@@ -446,12 +509,7 @@ class DataInspector:
     def delete_rows(self, row_indices):
 
         """
-        Delete rows using index values.
-
-        Parameters
-        ----------
-        row_indices : list
-            List of row indices
+        Delete rows using indices.
         """
 
         if self.df is None:
@@ -477,19 +535,6 @@ class DataInspector:
         """
         Detect and optionally remove outliers
         using IQR method.
-
-        Parameters
-        ----------
-        column : str
-            Numeric column name
-
-        remove : bool
-            If True, remove outliers
-
-        Returns
-        -------
-        pandas.DataFrame
-            Outlier rows
         """
 
         if self.df is None:
@@ -537,6 +582,19 @@ class DataInspector:
         )
 
 
+        try:
+
+            from IPython.display import display # pyright: ignore[reportMissingModuleSource]
+
+            display(
+                outliers.head(20)
+            )
+
+        except Exception:
+
+            print(outliers.head(20))
+
+
         if remove:
 
             self.df = self.df[
@@ -556,15 +614,6 @@ class DataInspector:
 
         """
         Normalize numeric columns.
-
-        Parameters
-        ----------
-        method : str
-            minmax, standard, robust
-
-        Returns
-        -------
-        pandas.DataFrame
         """
 
         if self.df is None:
@@ -620,6 +669,22 @@ class DataInspector:
             f"{method} normalization completed."
         )
 
+
+        try:
+
+            from IPython.display import display # pyright: ignore[reportMissingModuleSource]
+
+            display(
+                scaled_df.head(20)
+                .style
+                .background_gradient()
+            )
+
+        except Exception:
+
+            print(scaled_df.head())
+
+
         return scaled_df
 
 
@@ -629,15 +694,6 @@ class DataInspector:
 
         """
         Encode categorical columns.
-
-        Parameters
-        ----------
-        method : str
-            onehot or ordinal
-
-        Returns
-        -------
-        pandas.DataFrame
         """
 
         if self.df is None:
@@ -690,6 +746,22 @@ class DataInspector:
             f"{method} encoding completed."
         )
 
+
+        try:
+
+            from IPython.display import display # pyright: ignore[reportMissingModuleSource]
+
+            display(
+                encoded_df.head(20)
+                .style
+                .background_gradient()
+            )
+
+        except Exception:
+
+            print(encoded_df.head())
+
+
         return encoded_df
 
 
@@ -701,10 +773,6 @@ class DataInspector:
         """
         Merge normalized numeric data
         and encoded categorical data.
-
-        Returns
-        -------
-        pandas.DataFrame
         """
 
         numeric_df = (
@@ -731,6 +799,22 @@ class DataInspector:
             "Processed dataset merged successfully."
         )
 
+
+        try:
+
+            from IPython.display import display # pyright: ignore[reportMissingModuleSource]
+
+            display(
+                merged_df.head(20)
+                .style
+                .background_gradient()
+            )
+
+        except Exception:
+
+            print(merged_df.head())
+
+
         return merged_df
 
 
@@ -738,10 +822,6 @@ class DataInspector:
 
         """
         Return current dataframe.
-
-        Returns
-        -------
-        pandas.DataFrame
         """
 
         return self.df
