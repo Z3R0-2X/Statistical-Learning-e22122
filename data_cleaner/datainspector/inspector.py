@@ -1,6 +1,11 @@
 import pandas as pd
 import numpy as np
 
+import plotly.express as px
+import plotly.graph_objects as go
+
+from plotly.subplots import make_subplots
+
 from sklearn.preprocessing import (
     MinMaxScaler,
     StandardScaler,
@@ -17,6 +22,7 @@ class DataInspector:
     - data cleaning
     - preprocessing
     - dataset inspection
+    - visualization
     """
 
     def __init__(self):
@@ -34,15 +40,6 @@ class DataInspector:
         Load dataset from:
         - local CSV file
         - online CSV URL
-
-        Parameters
-        ----------
-        source : str
-            File path or URL
-
-        Returns
-        -------
-        pandas.DataFrame
         """
 
         try:
@@ -196,7 +193,7 @@ class DataInspector:
 
         try:
 
-            from IPython.display import display # pyright: ignore[reportMissingModuleSource]
+            from IPython.display import display  # pyright: ignore[reportMissingModuleSource]
 
             print("\nMissing Value Report:\n")
 
@@ -264,7 +261,7 @@ class DataInspector:
 
         try:
 
-            from IPython.display import display # pyright: ignore[reportMissingModuleSource]
+            from IPython.display import display  # pyright: ignore[reportMissingModuleSource]
 
             display(
                 missing
@@ -312,7 +309,7 @@ class DataInspector:
 
         try:
 
-            from IPython.display import display # pyright: ignore[reportMissingModuleSource]
+            from IPython.display import display  # pyright: ignore[reportMissingModuleSource]
 
             display(
                 details.style.background_gradient()
@@ -375,7 +372,7 @@ class DataInspector:
 
             try:
 
-                from IPython.display import display # pyright: ignore[reportMissingModuleSource]
+                from IPython.display import display  # pyright: ignore[reportMissingModuleSource]
 
                 display(
                     summary_df
@@ -584,7 +581,7 @@ class DataInspector:
 
         try:
 
-            from IPython.display import display # pyright: ignore[reportMissingModuleSource]
+            from IPython.display import display  # pyright: ignore[reportMissingModuleSource]
 
             display(
                 outliers.head(20)
@@ -672,7 +669,7 @@ class DataInspector:
 
         try:
 
-            from IPython.display import display # pyright: ignore[reportMissingModuleSource]
+            from IPython.display import display  # pyright: ignore[reportMissingModuleSource]
 
             display(
                 scaled_df.head(20)
@@ -749,7 +746,7 @@ class DataInspector:
 
         try:
 
-            from IPython.display import display # pyright: ignore[reportMissingModuleSource]
+            from IPython.display import display  # pyright: ignore[reportMissingModuleSource]
 
             display(
                 encoded_df.head(20)
@@ -765,15 +762,22 @@ class DataInspector:
         return encoded_df
 
 
-    def merge_processed_data(
+    def create_normalized_data_df(
             self,
             numeric_method='minmax',
             categorical_method='onehot'):
 
         """
-        Merge normalized numeric data
+        Create a fully processed dataframe
+        with normalized numeric data
         and encoded categorical data.
         """
+
+        if self.df is None:
+
+            print("No dataset loaded.")
+            return
+
 
         numeric_df = (
             self.extract_normalized_numeric_data(
@@ -789,33 +793,257 @@ class DataInspector:
         )
 
 
-        merged_df = pd.concat(
+        final_df = pd.concat(
+
             [numeric_df, categorical_df],
+
             axis=1
         )
 
 
         print(
-            "Processed dataset merged successfully."
+            "\nNormalized dataset created successfully."
         )
 
 
         try:
 
-            from IPython.display import display # pyright: ignore[reportMissingModuleSource]
+            from IPython.display import display  # pyright: ignore[reportMissingModuleSource]
 
             display(
-                merged_df.head(20)
+
+                final_df.head(20)
                 .style
                 .background_gradient()
             )
 
         except Exception:
 
-            print(merged_df.head())
+            print(final_df.head(20))
 
 
-        return merged_df
+        return final_df
+
+
+    def plot_numerical(self, columns):
+
+        """
+        Generate:
+        - violin plot
+        - scatter plot
+        - histogram
+
+        for numerical columns.
+        """
+
+        if self.df is None:
+
+            print("No dataset loaded.")
+            return
+
+
+        for column in columns:
+
+            if column not in self.df.columns:
+
+                print(f"{column} not found.")
+                continue
+
+
+            if not pd.api.types.is_numeric_dtype(
+                    self.df[column]):
+
+                print(f"{column} is not numeric.")
+                continue
+
+
+            fig = make_subplots(
+
+                rows=1,
+                cols=3,
+
+                subplot_titles=(
+
+                    "Violin Plot",
+                    "Scatter Plot",
+                    "Histogram"
+                )
+            )
+
+
+            fig.add_trace(
+
+                go.Violin(
+
+                    y=self.df[column],
+
+                    name=column,
+
+                    box_visible=True
+
+                ),
+
+                row=1,
+                col=1
+            )
+
+
+            fig.add_trace(
+
+                go.Scatter(
+
+                    x=self.df.index,
+
+                    y=self.df[column],
+
+                    mode='markers'
+
+                ),
+
+                row=1,
+                col=2
+            )
+
+
+            fig.add_trace(
+
+                go.Histogram(
+
+                    x=self.df[column]
+
+                ),
+
+                row=1,
+                col=3
+            )
+
+
+            fig.update_layout(
+
+                title=f"{column} Distribution Analysis",
+
+                height=500,
+                width=1200,
+
+                showlegend=False
+            )
+
+
+            fig.show()
+
+
+    def plot_relationship(self, col1, col2):
+
+        """
+        Automatically visualize relationships
+        between variables.
+
+        Num-Num -> Scatter Plot
+        Cat-Num -> Box Plot
+        Cat-Cat -> Grouped Bar Chart
+        """
+
+        if self.df is None:
+
+            print("No dataset loaded.")
+            return
+
+
+        if col1 not in self.df.columns:
+
+            print(f"{col1} not found.")
+            return
+
+
+        if col2 not in self.df.columns:
+
+            print(f"{col2} not found.")
+            return
+
+
+        is_col1_numeric = pd.api.types.is_numeric_dtype(
+            self.df[col1]
+        )
+
+        is_col2_numeric = pd.api.types.is_numeric_dtype(
+            self.df[col2]
+        )
+
+
+        if is_col1_numeric and is_col2_numeric:
+
+            fig = px.scatter(
+
+                self.df,
+
+                x=col1,
+                y=col2,
+
+                trendline="ols",
+
+                title=f"{col1} vs {col2}"
+            )
+
+
+        elif (
+            is_col1_numeric and
+            not is_col2_numeric
+        ) or (
+            not is_col1_numeric and
+            is_col2_numeric
+        ):
+
+            if is_col1_numeric:
+
+                numeric_col = col1
+                categorical_col = col2
+
+            else:
+
+                numeric_col = col2
+                categorical_col = col1
+
+
+            fig = px.box(
+
+                self.df,
+
+                x=categorical_col,
+                y=numeric_col,
+
+                points="all",
+
+                title=f"{categorical_col} vs {numeric_col}"
+            )
+
+
+        else:
+
+            grouped = (
+
+                self.df
+                .groupby([col1, col2])
+                .size()
+                .reset_index(name='Count')
+            )
+
+
+            fig = px.bar(
+
+                grouped,
+
+                x=col1,
+                y='Count',
+
+                color=col2,
+
+                barmode='group',
+
+                title=f"{col1} vs {col2}"
+            )
+
+
+        fig.show()
 
 
     def get_dataframe(self):
