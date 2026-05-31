@@ -12,7 +12,14 @@ from sklearn.preprocessing import (
     RobustScaler,
     LabelEncoder
 )
+import plotly.express as px
+import plotly.graph_objects as go
 
+from scipy.stats import (
+    chi2_contingency,
+    pointbiserialr,
+    f_oneway
+)
 
 class DataInspector:
 
@@ -732,6 +739,23 @@ class DataInspector:
                     encoded_df[col].astype(str)
                 )
 
+        elif method == 'uniform':
+             encoded_df = categorical_df.copy()
+
+             for col in encoded_df.columns:
+                 
+                 encoder = LabelEncoder()
+                 encoded_df[col] = encoder.fit_transform(
+                      encoded_df[col].astype(str)
+                 )
+                 max_val = encoded_df[col].max()
+
+                 if max_val != 0:
+                     encoded_df[col] = (
+                         encoded_df[col] / max_val
+                     )
+
+
 
         else:
 
@@ -1044,6 +1068,34 @@ class DataInspector:
 
 
         fig.show()
+
+    def extract_numeric_data(self):
+        
+        """
+        Return only numeric columns.
+        """
+        if self.df is None:
+            print("No dataset loaded.")
+            return
+        numeric_df = self.df.select_dtypes(
+            include=np.number
+        )
+
+        return numeric_df
+    
+    def extract_categorical_data(self):
+
+        """
+        Return only categorical columns.
+        """
+        if self.df is None:
+            print("No dataset loaded.")
+            return
+        categorical_df = self.df.select_dtypes(
+            exclude=np.number
+        )
+
+        return categorical_df
 
 
     def get_dataframe(self):
