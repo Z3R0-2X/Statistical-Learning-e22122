@@ -1096,8 +1096,231 @@ class DataInspector:
         )
 
         return categorical_df
+    
+    def plot_categorical(self, columns):
 
+        """
+        Plot categorical frequencies.
+        """
 
+        if self.df is None:
+
+            print("No dataset loaded.")
+            return
+
+        if isinstance(columns, str):
+
+            columns = [columns]
+
+        for col in columns:
+
+            counts = (
+                self.df[col]
+                .value_counts()
+                .reset_index()
+            )
+
+            counts.columns = [
+                col,
+                "Count"
+            ]
+
+            counts["Percentage"] = (
+
+                counts["Count"]
+
+                / counts["Count"].sum()
+
+            ) * 100
+
+            fig = px.bar(
+
+                counts,
+
+                x=col,
+
+                y="Count",
+
+                text=counts["Percentage"]
+                .round(1)
+                .astype(str) + "%",
+
+                title=f"Frequency Distribution: {col}"
+            )
+
+            fig.show()
+
+    def plot_numerical_correlation(self):
+
+        """
+        Pearson correlation heatmap.
+        """
+
+        if self.df is None:
+
+            print("No dataset loaded.")
+            return
+
+        numeric_df = self.df.select_dtypes(
+            include=np.number
+        )
+
+        corr = numeric_df.corr()
+
+        fig = px.imshow(
+
+            corr,
+
+            text_auto=".2f",
+
+            title="Numerical Correlation Heatmap"
+        )
+
+        fig.show()
+
+        return corr
+    
+    def _cramers_v(self, x, y):
+
+        table = pd.crosstab(x, y)
+
+        chi2 = chi2_contingency(table)[0]
+
+        n = table.sum().sum()
+
+        r, k = table.shape
+
+        return np.sqrt(
+            chi2 / (n * (min(k - 1, r - 1)))
+        )
+    
+    def plot_categorical_correlation(self):
+
+        """
+        Cramer's V heatmap.
+        """
+
+        categorical = self.df.select_dtypes(
+            exclude=np.number
+        )
+
+        cols = categorical.columns
+
+        matrix = pd.DataFrame(
+
+            index=cols,
+            columns=cols
+        )
+
+        for c1 in cols:
+
+            for c2 in cols:
+
+                matrix.loc[c1, c2] = (
+                    self._cramers_v(
+                        categorical[c1],
+                        categorical[c2]
+                    )
+                )
+
+        matrix = matrix.astype(float)
+
+        fig = px.imshow(
+
+            matrix,
+
+            text_auto=".2f",
+
+            title="Categorical Correlation Heatmap"
+        )
+
+        fig.show()
+
+        return matrix
+
+    def correlate_num_to_cat(self):
+
+        """
+        Numeric-Categorical associations.
+        """
+
+        numeric_cols = self.df.select_dtypes(
+            include=np.number
+        ).columns
+
+        categorical_cols = self.df.select_dtypes(
+            exclude=np.number
+        ).columns
+
+        results = []
+
+        for num_col in numeric_cols:
+
+            for cat_col in categorical_cols:
+
+                groups = [
+
+                    group[num_col].dropna()
+
+                    for _, group in
+
+                    self.df.groupby(cat_col)
+                ]
+
+                if len(groups) > 1:
+
+                    try:
+
+                        f_stat, p_val = (
+                            f_oneway(*groups)
+                        )
+
+                        results.append({
+
+                            "Numeric":
+                            num_col,
+
+                            "Categorical":
+                            cat_col,
+
+                            "F Statistic":
+                            f_stat,
+
+                            "P Value":
+                            p_val
+                        })
+
+                    except:
+
+                        pass
+
+        return pd.DataFrame(results)
+
+    def plot_all_associations_heatmap(self):
+
+        """
+        Unified association heatmap.
+        """
+
+        numeric = self.df.select_dtypes(
+            include=np.number
+        )
+
+        corr = numeric.corr()
+
+        fig = px.imshow(
+
+            corr,
+
+            text_auto=".2f",
+
+            title="Association Heatmap"
+        )
+
+        fig.show()
+
+        return corr    
+        
     def get_dataframe(self):
 
         """
