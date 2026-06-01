@@ -43,9 +43,20 @@ pip install --upgrade --force-reinstall git+https://github.com/Z3R0-2X/Statistic
 from datainspector import DataInspector
 
 inspector = DataInspector()
-```
 
----
+```
+# Custom Plotting Methods
+
+The package includes a separate PlottingMethods class for creating
+individual charts that can be used independently of DataInspector.
+
+## Import
+
+```python
+from datainspector import PlottingMethods
+
+plotter = PlottingMethods()
+```
 
 # Loading Data
 
