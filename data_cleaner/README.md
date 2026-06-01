@@ -26,13 +26,13 @@ Designed for use in:
 Install directly from GitHub:
 
 ```bash
-pip install git+https://github.com/Z3R0-2X/Statistical-Learning-e22122.git#subdirectory=data_cleaner
+!pip install git+https://github.com/Z3R0-2X/Statistical-Learning-e22122.git#subdirectory=data_cleaner
 ```
 
 Update to the latest version:
 
 ```bash
-pip install --upgrade --force-reinstall git+https://github.com/Z3R0-2X/Statistical-Learning-e22122.git#subdirectory=data_cleaner
+!pip install --upgrade --force-reinstall git+https://github.com/Z3R0-2X/Statistical-Learning-e22122.git#subdirectory=data_cleaner
 ```
 
 ---
