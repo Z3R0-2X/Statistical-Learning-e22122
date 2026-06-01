@@ -572,5 +572,3 @@ inspector.plot_numerical_correlation()
 # Author
 
 **Harendra Gunawardana**
-Department of Mechanical Engineering
-University of Moratuwa
